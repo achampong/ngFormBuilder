@@ -4,10 +4,26 @@ module.exports = function(app) {
     function(formioComponentsProvider) {
       formioComponentsProvider.register('checkbox', {
         icon: 'fa fa-check-square',
+        onEdit: ['$scope', function($scope) {
+          $scope.inputTypes = [
+            {
+              name: 'checkbox',
+              title: 'Checkbox'
+            },
+            {
+              name: 'radio',
+              title: 'Radio'
+            }
+          ];
+        }],
         views: [
           {
             name: 'Display',
             template: 'formio/components/checkbox/display.html'
+          },
+          {
+            name: 'Data',
+            template: 'formio/components/common/data.html'
           },
           {
             name: 'Validation',
@@ -37,11 +53,26 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/display.html',
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
-          '<form-builder-option property="defaultValue"></form-builder-option>' +
+          '<div class="form-group">' +
+            '<label for="inputType" form-builder-tooltip="This is the input type used for this checkbox.">Input Type</label>' +
+            '<select class="form-control" id="inputType" name="inputType" ng-options="inputType.name as inputType.title for inputType in inputTypes" ng-model="component.inputType"></select>' +
+          '</div>' +
+          '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
+          '  <label for="name" form-builder-tooltip="The key used to trigger the radio button toggle.">Radio Key</label>' +
+          '  <input type="text" class="form-control" id="name" name="name" ng-model="component.name" placeholder="{{ component.key }}" />' +
+          '</div>' +
+          '<div class="form-group" ng-if="component.inputType === \'radio\'">' +
+          '  <label for="value" form-builder-tooltip="The value used with this radio button.">Radio Value</label>' +
+          '  <input type="text" class="form-control" id="value" name="value" ng-model="component.value" placeholder="{{ component.value }}" />' +
+          '</div>' +
+          '<form-builder-option property="datagridLabel"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -49,6 +80,7 @@ module.exports = function(app) {
       $templateCache.put('formio/components/checkbox/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
+          '<form-builder-option-custom-validation></form-builder-option-custom-validation>' +
         '</ng-form>'
       );
     }

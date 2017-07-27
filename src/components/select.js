@@ -1,3 +1,4 @@
+var _clone = require('lodash/clone');
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
@@ -46,7 +47,7 @@ module.exports = function(app) {
             var fields = [];
             FormioUtils.eachComponent(components, function(component) {
               if (component.key && component.input && (component.type !== 'button') && component.key !== $scope.component.key) {
-                var comp = _.clone(component);
+                var comp = _clone(component);
                 if (!comp.label) {
                   comp.label = comp.key;
                 }
@@ -99,9 +100,13 @@ module.exports = function(app) {
             }
           };
 
-          $scope.$watch('component.dataSrc', function(source) {
+          $scope.$watch('component.dataSrc', function(source, prevSource) {
+            if (source !== prevSource) {
+              $scope.component.template = '<span>{{ item.label }}</span>';
+            }
+
             if (($scope.resources.length === 0) && (source === 'resource')) {
-              $scope.formio.loadForms({params: {type: 'resource'}}).then(function(resources) {
+              $scope.formio.loadForms({params: {type: 'resource', limit: 4294967295}}).then(function(resources) {
                 $scope.resources = resources;
                 loadFields();
               });
@@ -145,11 +150,15 @@ module.exports = function(app) {
         '<ng-form>' +
           '<form-builder-option property="label"></form-builder-option>' +
           '<form-builder-option property="placeholder"></form-builder-option>' +
+          '<form-builder-option property="description"></form-builder-option>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -163,14 +172,24 @@ module.exports = function(app) {
           '<ng-switch on="component.dataSrc">' +
             '<div class="form-group" ng-switch-when="json">' +
               '<label for="data.json" form-builder-tooltip="A raw JSON array to use as a data source.">Data Source Raw JSON</label>' +
-              '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" rows="3">{{ component.data.json }}</textarea>' +
+              '<textarea class="form-control" id="data.json" name="data.json" ng-model="component.data.json" placeholder="Raw JSON Array" json-input rows="3">{{ component.data.json }}</textarea>' +
             '</div>' +
-            '<form-builder-option ng-switch-when="url" property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
+            '<div ng-switch-when="url">' +
+            '  <form-builder-option property="data.url" label="Data Source URL" placeholder="Data Source URL" title="A URL that returns a JSON array to use as the data source."></form-builder-option>' +
+            '</div>' +
+            '<value-builder ng-switch-when="url" data=component.data.headers label="Request Headers" tooltip-text="Set any headers that should be sent along with the request to the url. This is useful for authentication." label-label="Key" label-property="key" />' +
             '<value-builder ng-switch-when="values" data="component.data.values" label="Data Source Values" tooltip-text="Values to use as the data source. Labels are shown in the select field. Values are the corresponding values saved with the submission."></value-builder>' +
             '<div class="form-group" ng-switch-when="resource">' +
-              '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
-              '<select class="form-control" id="resource" name="resource" ng-options="value._id as value.title for value in resources" ng-model="component.data.resource"></select>' +
-            '</div>' +
+            '<label for="placeholder" form-builder-tooltip="The resource to be used with this field.">Resource</label>' +
+            '<ui-select ui-select-required ui-select-open-on-focus ng-model="component.data.resource" theme="bootstrap">' +
+              '<ui-select-match class="ui-select-match" placeholder="">' +
+                '{{$select.selected.title}}' +
+              '</ui-select-match>' +
+              '<ui-select-choices class="ui-select-choices" repeat="value._id as value in resources | filter: $select.search" refresh="refreshSubmissions($select.search)" refresh-delay="250">' +
+                '<div ng-bind-html="value.title | highlight: $select.search"></div>' +
+              '</ui-select-choices>' +
+            '</ui-select>' +
+          '</div>' +
           '</ng-switch>' +
           '<form-builder-option ng-hide="component.dataSrc !== \'url\'" property="selectValues" label="Data Path" type="text" placeholder="The object path to the iterable items." title="The property within the source data, where iterable items reside. For example: results.items or results[0].items"></form-builder-option>' +
           '<form-builder-option ng-hide="component.dataSrc == \'values\' || component.dataSrc == \'resource\' || component.dataSrc == \'custom\'" property="valueProperty" label="Value Property" placeholder="The selected item\'s property to save." title="The property of each item in the data source to use as the select value. If not specified, the item itself will be used."></form-builder-option>' +
@@ -182,11 +201,20 @@ module.exports = function(app) {
           '  <label for="placeholder" form-builder-tooltip="The properties on the resource to return as part of the options. Separate property names by commas. If left blank, all properties will be returned.">Select Fields</label>' +
           '  <input type="text" class="form-control" id="selectFields" name="selectFields" ng-model="component.selectFields" placeholder="Comma separated list of fields to select." value="{{ component.selectFields }}">' +
           '</div>' +
+          '<div ng-show="component.dataSrc == \'url\'">' +
+          '<input type="checkbox" ng-model="component.data.disableLimit" name="disableLimit"></input>' +
+          '  <label for="disableLimit" form-builder-tooltip="When enabled the request will not include the limit and skip options in the query string">Disable limiting response</label>' +
+          '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="searchField" label="Search Query Name" placeholder="Name of URL query parameter" title="The name of the search querystring parameter used when sending a request to filter results with. The server at the URL must handle this query parameter."></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\'" property="filter" label="Filter Query" placeholder="The filter query for results." title="Use this to provide additional filtering using query parameters."></form-builder-option>' +
+          '<form-builder-option ng-show="component.dataSrc == \'url\' || component.dataSrc == \'resource\' || component.dataSrc == \'json\'" property="limit" label="Limit" placeholder="Maximum number of items to view per page of results." title="Use this to limit the number of items to request or view."></form-builder-option>' +
+          '<div class="form-group" ng-show="component.dataSrc == \'json\'">' +
+          '  <label for="filter" form-builder-tooltip="The filter type for search.">Search Filter</label>' +
+          '  <select class="form-control" id="filter" name="filter" ng-model="component.filter" ng-options="value as label for (value, label) in {none: \'No Search\', contains: \'Contains\', startsWith: \'Starts With\'}"></select>' +
+          '</div>' +
           '<div class="form-group" ng-show="component.dataSrc == \'custom\'">' +
           '  <label for="custom" form-builder-tooltip="Write custom code to return the value options. The form data object is available.">Custom Values</label>' +
-          '  <textarea class="form-control" rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];">{{ component.data.custom }}</textarea>' +
+          '  <formio-script-editor rows="10" id="custom" name="custom" ng-model="component.data.custom" placeholder="/*** Example Code ***/\nvalues = data[\'mykey\'];"></formio-script-editor>' +
           '</div>' +
           '<div class="form-group">' +
             '<label for="placeholder" form-builder-tooltip="The HTML template for the result data items.">Item Template</label>' +
@@ -197,7 +225,9 @@ module.exports = function(app) {
           '  <select class="form-control" id="refreshOn" name="refreshOn" ng-options="field.key as field.label for field in formFields" ng-model="component.refreshOn"></select>' +
           '</div>' +
           '<form-builder-option ng-show="component.dataSrc == \'resource\' || component.dataSrc == \'url\' || component.dataSrc == \'custom\'" property="clearOnRefresh"></form-builder-option>' +
+          '<form-builder-option ng-show="component.dataSrc == \'resource\'" property="reference"></form-builder-option>' +
           '<form-builder-option ng-show="component.dataSrc == \'url\'" property="authenticate"></form-builder-option>' +
+          '<form-builder-option property="defaultValue"></form-builder-option>' +
         '</ng-form>'
       );
 

@@ -31,6 +31,7 @@ module.exports = function(app) {
         '<ng-form>' +
         '<form-builder-option property="label"></form-builder-option>' +
         '<form-builder-option property="customClass"></form-builder-option>' +
+        '<form-builder-option property="clearOnHide"></form-builder-option>' +
         '<form-builder-option property="protected"></form-builder-option>' +
         '<form-builder-option property="persistent"></form-builder-option>' +
         '<form-builder-option property="tableView"></form-builder-option>' +
@@ -40,7 +41,7 @@ module.exports = function(app) {
       $templateCache.put('formio/formbuilder/container.html',
         '<fieldset>' +
         '<label ng-if="component.label" class="control-label">{{ component.label }}</label>' +
-        '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
+        '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</fieldset>'
       );
     }

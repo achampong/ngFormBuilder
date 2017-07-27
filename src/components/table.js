@@ -44,8 +44,8 @@ module.exports = function(app) {
             '</tr></thead>' +
             '<tbody>' +
               '<tr ng-repeat="row in component.rows">' +
-                '<td ng-repeat="component in row">' +
-                  '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
+                '<td ng-repeat="col in row">' +
+                  '<form-builder-list parent="component" component="col" form="form" options="options" formio="::formio"></form-builder-list>' +
                 '</td>' +
               '</tr>' +
             '</tbody>' +
@@ -61,6 +61,7 @@ module.exports = function(app) {
           '<form-builder-option property="bordered"></form-builder-option>' +
           '<form-builder-option property="hover"></form-builder-option>' +
           '<form-builder-option property="condensed"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
     }

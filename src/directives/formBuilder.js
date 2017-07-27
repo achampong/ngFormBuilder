@@ -1,4 +1,11 @@
 /*eslint max-statements: 0*/
+var _cloneDeep = require('lodash/cloneDeep');
+var _each = require('lodash/each');
+var _omitBy = require('lodash/omitBy');
+var _groupBy = require('lodash/groupBy');
+var _upperFirst = require('lodash/upperFirst');
+var _merge = require('lodash/merge');
+var _capitalize = require('lodash/capitalize');
 module.exports = ['debounce', function(debounce) {
   return {
     replace: true,
@@ -6,6 +13,7 @@ module.exports = ['debounce', function(debounce) {
     scope: {
       form: '=?',
       src: '=',
+      url: '=?',
       type: '=',
       onSave: '=',
       onCancel: '=',
@@ -18,13 +26,17 @@ module.exports = ['debounce', function(debounce) {
       'Formio',
       'FormioUtils',
       'dndDragIframeWorkaround',
+      '$interval',
+      '$timeout',
       function(
         $scope,
         formioComponents,
         ngDialog,
         Formio,
         FormioUtils,
-        dndDragIframeWorkaround
+        dndDragIframeWorkaround,
+        $interval,
+        $timeout
       ) {
         $scope.options = $scope.options || {};
 
@@ -36,12 +48,19 @@ module.exports = ['debounce', function(debounce) {
         if (!$scope.form.components) {
           $scope.form.components = [];
         }
+        if (!$scope.form.display) {
+          $scope.form.display = 'form';
+        }
         if (!$scope.options.noSubmit && !$scope.form.components.length) {
           $scope.form.components.push(submitButton);
         }
         $scope.hideCount = 2;
         $scope.form.page = 0;
-        $scope.formio = $scope.src ? new Formio($scope.src) : null;
+        var baseUrl = $scope.options.baseUrl || Formio.getBaseUrl();
+        $scope.formio = $scope.src ? new Formio($scope.src, {base: baseUrl}) : null;
+        if ($scope.url) {
+          $scope.formio = new Formio($scope.url, {base: baseUrl});
+        }
 
         var setNumPages = function() {
           if (!$scope.form) {
@@ -72,25 +91,48 @@ module.exports = ['debounce', function(debounce) {
         };
 
         // Load the form.
-        if ($scope.formio && $scope.formio.formId) {
+        if ($scope.src && $scope.formio && $scope.formio.formId) {
           $scope.formio.loadForm().then(function(form) {
             $scope.form = form;
-            $scope.form.page = 0;
+            if (!$scope.form.display) {
+              $scope.form.display = 'form';
+            }
             if (!$scope.options.noSubmit && $scope.form.components.length === 0) {
               $scope.form.components.push(submitButton);
             }
+            $scope.showPage(0);
           });
         }
+
+        // Ensure we always have a page set.
+        $scope.$watch('form.page', function(page) {
+          if (page === undefined) {
+            $scope.showPage(0);
+          }
+        });
 
         $scope.$watch('form.display', function(display) {
           $scope.hideCount = (display === 'wizard') ? 1 : 2;
         });
 
+        // Ensure that they don't remove components by canceling the edit modal.
+        $scope.$watch('form._id', function(_id) {
+          if (!_id) {
+            return;
+          }
+          FormioUtils.eachComponent($scope.form.components, function(component) {
+            delete component.isNew;
+          }, true);
+        });
+
         // Make sure they can switch back and forth between wizard and pages.
         $scope.$on('formDisplay', function(event, display) {
           $scope.form.display = display;
-          $scope.form.page = 0;
           setNumPages();
+          $timeout(function() {
+            $scope.showPage(0);
+            $scope.$apply();
+          });
         });
 
         // Return the form pages.
@@ -109,19 +151,39 @@ module.exports = ['debounce', function(debounce) {
           return pages;
         };
 
-        // Show the form page.
-        $scope.showPage = function(page) {
-          var i = 0;
-          for (i = 0; i < $scope.form.components.length; i++) {
+        $scope.getPage = function() {
+          var pageNum = 0;
+          for (var i = 0; i < $scope.form.components.length; i++) {
             var component = $scope.form.components[i];
             if (component.type === 'panel') {
-              if (i === page) {
+              if (i === $scope.form.page) {
                 break;
+              }
+              pageNum++;
+            }
+          }
+          return pageNum;
+        };
+
+        // Show the form page.
+        /* eslint-disable max-depth */
+        $scope.showPage = function(page) {
+          var pageNum = 0;
+          if ($scope.form && $scope.form.components) {
+            for (var i = 0; i < $scope.form.components.length; i++) {
+              var component = $scope.form.components[i];
+              if (component.type === 'panel') {
+                if (pageNum === page) {
+                  pageNum = i;
+                  break;
+                }
+                pageNum++;
               }
             }
           }
-          $scope.form.page = i;
+          $scope.form.page = pageNum;
         };
+        /* eslint-enable max-depth */
 
         $scope.newPage = function() {
           var index = $scope.form.numPages;
@@ -135,6 +197,10 @@ module.exports = ['debounce', function(debounce) {
             key: 'page' + pageNum
           };
           $scope.form.numPages++;
+          $scope.$emit('newPage', {
+            index: index,
+            component: component
+          });
           $scope.form.components.splice(index, 0, component);
         };
 
@@ -143,31 +209,51 @@ module.exports = ['debounce', function(debounce) {
           setNumPages();
         });
 
-        $scope.formComponents = _.cloneDeep(formioComponents.components);
-        _.each($scope.formComponents, function(component, key) {
+        $scope.formComponents = _cloneDeep(formioComponents.components);
+        _each($scope.formComponents, function(component, key) {
           component.settings.isNew = true;
           if (component.settings.hasOwnProperty('builder') && !component.settings.builder || component.disabled) {
             delete $scope.formComponents[key];
           }
         });
 
-        $scope.formComponentGroups = _.cloneDeep(_.omitBy(formioComponents.groups, 'disabled'));
-        $scope.formComponentsByGroup = _.groupBy($scope.formComponents, function(component) {
+        $scope.pdftypes = [
+          $scope.formComponents.textfield,
+          $scope.formComponents.number,
+          $scope.formComponents.password,
+          $scope.formComponents.email,
+          $scope.formComponents.phoneNumber,
+          $scope.formComponents.currency,
+          $scope.formComponents.checkbox,
+          $scope.formComponents.signature,
+          $scope.formComponents.select,
+          $scope.formComponents.textarea,
+          $scope.formComponents.datetime
+        ];
+
+        $scope.formComponentGroups = _cloneDeep(_omitBy(formioComponents.groups, 'disabled'));
+        $scope.formComponentsByGroup = _groupBy($scope.formComponents, function(component) {
           return component.group;
         });
 
         // Get the resource fields.
-        if ($scope.formio) {
+        var resourceEnabled = !formioComponents.groups.resource || !formioComponents.groups.resource.disabled;
+        if ($scope.formio && resourceEnabled) {
           $scope.formComponentsByGroup.resource = {};
           $scope.formComponentGroups.resource = {
-            title: 'Existing Resource Fields',
+            title: $scope.options.resourceTitle || 'Existing Resource Fields',
             panelClass: 'subgroup-accordion-container',
             subgroups: {}
           };
 
-          $scope.formio.loadForms({params: {type: 'resource', limit: 100}}).then(function(resources) {
+          var query = {params: {type: 'resource', limit: 100}};
+          if ($scope.options && $scope.options.resourceFilter) {
+            query.params.tags = $scope.options.resourceFilter;
+          }
+
+          $scope.formio.loadForms(query).then(function(resources) {
             // Iterate through all resources.
-            _.each(resources, function(resource) {
+            _each(resources, function(resource) {
               var resourceKey = resource.name;
 
               // Add a legend for this resource.
@@ -179,14 +265,15 @@ module.exports = ['debounce', function(debounce) {
               // Iterate through each component.
               FormioUtils.eachComponent(resource.components, function(component) {
                 if (component.type === 'button') return;
+                if ($scope.options && $scope.options.resourceFilter && (!component.tags || component.tags.indexOf($scope.options.resourceFilter) === -1)) return;
 
                 var componentName = component.label;
                 if (!componentName && component.key) {
-                  componentName = _.upperFirst(component.key);
+                  componentName = _upperFirst(component.key);
                 }
 
-                $scope.formComponentsByGroup.resource[resourceKey].push(_.merge(
-                  _.cloneDeep(formioComponents.components[component.type], true),
+                $scope.formComponentsByGroup.resource[resourceKey].push(_merge(
+                  _cloneDeep(formioComponents.components[component.type], true),
                   {
                     title: componentName,
                     group: 'resource',
@@ -198,11 +285,12 @@ module.exports = ['debounce', function(debounce) {
                       label: component.label,
                       key: component.key,
                       lockKey: true,
-                      source: resource._id
+                      source: (!$scope.options.noSource ? resource._id : undefined),
+                      isNew: true
                     }
                   }
                 ));
-              });
+              }, true);
             });
           });
         }
@@ -222,29 +310,29 @@ module.exports = ['debounce', function(debounce) {
           $scope.$emit('formUpdate', $scope.form);
         };
 
-        $scope.capitalize = _.capitalize;
+        $scope.capitalize = _capitalize;
 
         // Set the root list height to the height of the formbuilder for ease of form building.
-        (function setRootListHeight() {
-          var listHeight = angular.element('.rootlist').height('inherit').height();
-          var builderHeight = angular.element('.formbuilder').height();
+        var rootlistEL = angular.element('.rootlist');
+        var formbuilderEL = angular.element('.formbuilder');
+
+        $interval(function setRootListHeight() {
+          var listHeight = rootlistEL.height('inherit').height();
+          var builderHeight = formbuilderEL.height();
           if ((builderHeight - listHeight) > 100) {
-            angular.element('.rootlist').height(builderHeight);
+            rootlistEL.height(builderHeight);
           }
-          setTimeout(setRootListHeight, 1000);
-        })();
+        }, 1000);
 
         // Add to scope so it can be used in templates
         $scope.dndDragIframeWorkaround = dndDragIframeWorkaround;
+        $scope.showPage(0);
       }
     ],
     link: function(scope, element) {
       var scrollSidebar = debounce(function() {
         // Disable all buttons within the form.
         angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
-        scope.$watch('form', function() {
-          angular.element('.formbuilder').find('button').attr('disabled', 'disabled');
-        }, true);
 
         // Make the left column follow the form.
         var formComponents = angular.element('.formcomponents');

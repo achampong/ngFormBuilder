@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width">
   <link rel="stylesheet" href="https://cdn.rawgit.com/odra/ng-json-explorer/master/dist/angular-json-explorer.min.css">
   <link rel="stylesheet" href="https://unpkg.com/bootswatch@3.3.7/yeti/bootstrap.min.css" />
-  <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
   <link rel="stylesheet" href="dist/ngFormBuilder-full.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" />
 </head>
@@ -144,6 +144,7 @@ node server</pre>
 <script src="https://cdn.ckeditor.com/4.5.11/standard/ckeditor.js"></script>
 <script src="https://unpkg.com/signature_pad@1.5.3/signature_pad.min.js"></script>
 <script src="dist/ngFormBuilder-full.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
 <script src="https://cdn.rawgit.com/odra/ng-json-explorer/master/dist/angular-json-explorer.min.js"></script>
 <script type="text/javascript">
   angular
@@ -166,89 +167,151 @@ node server</pre>
         }];
         $rootScope.form = {
           components: [{
-            "input": true,
-            "tableView": true,
-            "inputType": "text",
-            "inputMask": "",
-            "label": "First Name",
-            "key": "firstName",
-            "placeholder": "Enter your first name",
-            "prefix": "",
-            "suffix": "",
-            "multiple": false,
-            "defaultValue": "",
-            "protected": false,
-            "unique": false,
-            "persistent": true,
-            "validate": {
-              "required": false,
-              "minLength": "",
-              "maxLength": "",
-              "pattern": "",
-              "custom": "",
-              "customPrivate": false
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            inputMask: '',
+            label: 'First Name',
+            key: 'firstName',
+            placeholder: 'Enter your first name',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: false,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
             },
-            "conditional": {
-              "show": false,
-              "when": null,
-              "eq": ""
+            conditional: {
+              show: false,
+              when: null,
+              eq: ''
             },
-            "type": "textfield"
+            type: 'textfield'
           }, {
-            "input": true,
-            "tableView": true,
-            "inputType": "text",
-            "inputMask": "",
-            "label": "Last Name",
-            "key": "lastName",
-            "placeholder": "Enter your last name",
-            "prefix": "",
-            "suffix": "",
-            "multiple": false,
-            "defaultValue": "",
-            "protected": false,
-            "unique": false,
-            "persistent": true,
-            "validate": {
-              "required": false,
-              "minLength": "",
-              "maxLength": "",
-              "pattern": "",
-              "custom": "",
-              "customPrivate": false
+            input: true,
+            tableView: true,
+            inputType: 'text',
+            inputMask: '',
+            label: 'Last Name',
+            key: 'lastName',
+            placeholder: 'Enter your last name',
+            prefix: '',
+            suffix: '',
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            unique: false,
+            persistent: true,
+            validate: {
+              required: false,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: '',
+              customPrivate: false
             },
-            "conditional": {
-              "show": false,
-              "when": null,
-              "eq": ""
+            conditional: {
+              show: false,
+              when: null,
+              eq: ''
             },
-            "type": "textfield"
+            type: 'textfield'
           }, {
-            "input": true,
-            "tableView": true,
-            "label": "Message",
-            "key": "message",
-            "placeholder": "What do you think?",
-            "prefix": "",
-            "suffix": "",
-            "rows": 3,
-            "multiple": false,
-            "defaultValue": "",
-            "protected": false,
-            "persistent": true,
-            "validate": {
-              "required": false,
-              "minLength": "",
-              "maxLength": "",
-              "pattern": "",
-              "custom": ""
+            type: 'select',
+            validate: {
+              required: false
             },
-            "type": "textarea",
-            "conditional": {
-              "show": false,
-              "when": null,
-              "eq": ""
+            clearOnHide: true,
+            persistent: true,
+            unique: false,
+            protected: false,
+            multiple: true,
+            template: '<span>{{ item.label }}</span>',
+            authenticate: false,
+            filter: '',
+            refreshOn: '',
+            defaultValue: '',
+            valueProperty: '',
+            dataSrc: 'values',
+            data: {
+              custom: '',
+              resource: '',
+              url: '',
+              json: '',
+              values: [
+                {
+                  label: 'Raindrops on roses',
+                  value: 'raindropsOnRoses'
+                },
+                {
+                  label: 'Whiskers on Kittens',
+                  value: 'whiskersOnKittens'
+                },
+                {
+                  label: 'Bright copper kettles',
+                  value: 'brightCopperKettles'
+                },
+                {
+                  label: 'Warm woolen Mittens',
+                  value: 'warmWoolenMittens'
+                },
+                [
+
+                ]
+              ]
+            },
+            placeholder: 'Select a few',
+            key: 'favoriteThings',
+            label: 'Favorite Things',
+            tableView: true,
+            input: true
+          }, {
+            input: true,
+            tableView: true,
+            label: 'Message',
+            key: 'message',
+            placeholder: 'What do you think?',
+            prefix: '',
+            suffix: '',
+            rows: 3,
+            multiple: false,
+            defaultValue: '',
+            protected: false,
+            persistent: true,
+            validate: {
+              required: false,
+              minLength: '',
+              maxLength: '',
+              pattern: '',
+              custom: ''
+            },
+            type: 'textarea',
+            conditional: {
+              show: false,
+              when: null,
+              eq: ''
             }
+          }, {
+            type: 'button',
+            theme: 'primary',
+            disableOnInvalid: true,
+            action: 'submit',
+            block: false,
+            rightIcon: '',
+            leftIcon: '',
+            size: 'md',
+            key: 'submit',
+            tableView: false,
+            label: 'Submit',
+            input: true
           }],
           display: 'form'
         };

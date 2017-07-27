@@ -19,10 +19,25 @@ module.exports = {
     placeholder: 'Placeholder',
     tooltip: 'The placeholder text that will appear when this field is empty.'
   },
+  description: {
+    label: 'Description',
+    placeholder: 'Description for this field.',
+    tooltip: 'The description is text that will appear below the input field.'
+  },
+  path: {
+    label: 'Form Path',
+    placeholder: 'Enter the path of the Form to load',
+    tooltip: 'This is the path of the form to load.'
+  },
   inputMask: {
     label: 'Input Mask',
     placeholder: 'Input Mask',
     tooltip: 'An input mask helps the user with input by ensuring a predefined format.<br><br>9: numeric<br>a: alphabetical<br>*: alphanumeric<br><br>Example telephone mask: (999) 999-9999<br><br>See the <a target=\'_blank\' href=\'https://github.com/RobinHerbots/jquery.inputmask\'>jquery.inputmask documentation</a> for more information.</a>'
+  },
+  format: {
+    label: 'Format',
+    placeholder: 'Format',
+    tooltip: 'The moment.js format for saving the value of this field.'
   },
   authenticate: {
     label: 'Formio Authenticate',
@@ -49,10 +64,20 @@ module.exports = {
     type: 'checkbox',
     tooltip: 'Allows multiple values to be entered for this field.'
   },
+  disabled: {
+    label: 'Disabled',
+    type: 'checkbox',
+    tooltip: 'Disable the form input.'
+  },
   clearOnRefresh: {
     label: 'Clear Value On Refresh',
     type: 'checkbox',
     tooltip: 'When the Refresh On field is changed, clear the selected value.'
+  },
+  clearOnHide: {
+    label: 'Clear Value When Hidden',
+    type: 'checkbox',
+    tooltip: 'When a field is hidden, clear the value.'
   },
   unique: {
     label: 'Unique',
@@ -78,6 +103,16 @@ module.exports = {
     label: 'Persistent',
     type: 'checkbox',
     tooltip: 'A persistent field will be stored in database when the form is submitted.'
+  },
+  hidden: {
+    label: 'Hidden',
+    type: 'checkbox',
+    tooltip: 'A hidden field is still a part of the form, but is hidden from view.'
+  },
+  reference: {
+    label: 'Save as reference',
+    type: 'checkbox',
+    tooltip: 'Using this option will save this field as a reference and link its value to the value of the origin record.'
   },
   block: {
     label: 'Block',
@@ -128,6 +163,11 @@ module.exports = {
     label: 'Condensed',
     type: 'checkbox',
     tooltip: 'Condense the size of the table.'
+  },
+  datagridLabel: {
+    label: 'Datagrid Label',
+    type: 'checkbox',
+    tooltip: 'Show the label when in a datagrid.'
   },
   'validate.required': {
     label: 'Required',
@@ -191,5 +231,15 @@ module.exports = {
     label: 'Margin Left',
     placeholder: '0px',
     tooltip: 'Sets the left margin of this component. Must be a valid CSS measurement like `10px`.'
+  },
+  'addResource': {
+    label: 'Show Add Resource Button',
+    type: 'checkbox',
+    tooltip: 'Include a button for adding a new resource'
+  },
+  'addResourceLabel': {
+    label: 'Add Resource Text',
+    placeholder: 'Add Resource',
+    tooltip: 'Set the text of the Add Resource button.'
   }
 };

@@ -11,7 +11,7 @@ module.exports = function(app) {
         views: [
           {
             name: 'Display',
-            template: 'formio/components/common/display.html'
+            template: 'formio/components/well/display.html'
           },
           {
             name: 'API',
@@ -30,12 +30,13 @@ module.exports = function(app) {
     function($templateCache) {
       $templateCache.put('formio/formbuilder/well.html',
         '<div class="well">' +
-          '<form-builder-list component="component" form="form" formio="formio"></form-builder-list>' +
+          '<form-builder-list component="component" form="form" options="options" formio="::formio"></form-builder-list>' +
         '</div>'
       );
-      $templateCache.put('formio/components/common/display.html',
+      $templateCache.put('formio/components/well/display.html',
         '<ng-form>' +
           '<form-builder-option property="customClass"></form-builder-option>' +
+          '<form-builder-option property="tableView"></form-builder-option>' +
         '<ng-form>'
       );
     }

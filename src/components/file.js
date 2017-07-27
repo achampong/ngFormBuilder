@@ -1,3 +1,4 @@
+var _map = require('lodash/map');
 module.exports = function(app) {
   app.config([
     'formioComponentsProvider',
@@ -10,7 +11,7 @@ module.exports = function(app) {
           'Formio',
           function($scope, Formio) {
             // Pull out title and name from the list of storage plugins.
-            $scope.storage = _.map(Formio.providers.storage, function(storage, key) {
+            $scope.storage = _map(Formio.providers.storage, function(storage, key) {
               return {
                 title: storage.title,
                 name: key
@@ -63,8 +64,11 @@ module.exports = function(app) {
           '<form-builder-option property="customClass"></form-builder-option>' +
           '<form-builder-option property="tabindex"></form-builder-option>' +
           '<form-builder-option property="multiple"></form-builder-option>' +
+          '<form-builder-option property="clearOnHide"></form-builder-option>' +
           '<form-builder-option property="protected"></form-builder-option>' +
           '<form-builder-option property="persistent"></form-builder-option>' +
+          '<form-builder-option property="hidden"></form-builder-option>' +
+          '<form-builder-option property="disabled"></form-builder-option>' +
           '<form-builder-option property="tableView"></form-builder-option>' +
         '</ng-form>'
       );
@@ -72,7 +76,6 @@ module.exports = function(app) {
       $templateCache.put('formio/components/file/validate.html',
         '<ng-form>' +
           '<form-builder-option property="validate.required"></form-builder-option>' +
-          '<form-builder-option property="filePattern"></form-builder-option>' +
         '</ng-form>'
       );
     }

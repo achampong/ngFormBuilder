@@ -5,10 +5,13 @@ module.exports = [
         component: '=',
         formio: '=',
         form: '=',
+        parent: '=?',
         // # of items needed in the list before hiding the
         // drag and drop prompt div
         hideDndBoxCount: '=',
-        rootList: '='
+        rootList: '=',
+        options: '=',
+        data:'=?'
       },
       restrict: 'E',
       replace: true,
